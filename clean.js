@@ -1,8 +1,8 @@
 #!/usr/bin/node
 var fs = require('fs');
 var exec = require('child_process').exec;
-var start = new Date();
 var STATISTICS = {
+  start: new Date(),
   find: 0,
   matched: 0,
   deleted: 0
@@ -10,6 +10,8 @@ var STATISTICS = {
 
 var USER_CONFIG = {
   //rootPath: './',
+  //线上环境引用前缀，默认为空，比如音乐盒项目在线上的引用为/player/static/js/naga/asyncmodules/uniqueplay.js，则前缀为/player
+  sourceCodePrefix: '/player',
   sourceCodePath: 'src',
   imagesPath: 'src/static/images',
   debug: true
@@ -19,6 +21,7 @@ var USER_CONFIG = {
  * 配置文件
  */
 var CONFIG = {
+  pathPrefix: USER_CONFIG.sourceCodePrefix || '',
   rootPath: USER_CONFIG.rootPath,
   //控制是否真的删除
   debug: USER_CONFIG.debug,
@@ -92,7 +95,8 @@ var fileHandler = {
   _pattens: {
     //识别 ("/static/images")
     'images': /[\("']\/static\/images\/([\w\.\/-]*?)[\)"']/g,
-    'js': /src=\\?"\/([\w\/\.-]*\.js)/g
+    'js': new RegExp('src=\\\\?"' + CONFIG.pathPrefix.replace('/','\\/') + '\\/([\\w\\/\\.-]*\\.js)', 'g')
+    ///src=\\?"\/([\w\/\.-]*\.js)/g
   },
   _fn: null,
   fileMatched: function (fn) {
@@ -299,7 +303,7 @@ function deleteFiles(fileList) {
         });
     }
 
-    console.log('============= 运行结果(执行时间' + (new Date() - start) + 'ms) ==============')
+    console.log('============= 运行结果(执行时间' + (new Date() - STATISTICS.start) + 'ms) ==============')
     console.log('共找到' + (STATISTICS.find - STATISTICS.matched) + '个垃圾文件(共' + STATISTICS.find + '个文件)');
     console.log('安全删除' + STATISTICS.deleted + '个文件，剩余' +
       (STATISTICS.find - STATISTICS.matched - STATISTICS.deleted) + '个文件可能被使用到，请确认是否不再需要，手动进行清理');
